@@ -1,0 +1,73 @@
+-- Création de la base de données
+CREATE DATABASE pizzeria;
+USE pizzeria;
+
+-- Table `users` : Administrateurs et clients
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    mot_de_passe VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'client') DEFAULT 'client',
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table `employes` : Serveurs et cuisiniers
+CREATE TABLE employes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    poste ENUM('serveur', 'cuisinier') NOT NULL,
+    date_embauche DATE NOT NULL,
+    administrateur_id INT,
+    FOREIGN KEY (administrateur_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Table `produit` : Liste des pizzas/produits
+CREATE TABLE produit (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    description TEXT,
+    prix DECIMAL(10, 2) NOT NULL,
+    disponibilite BOOLEAN DEFAULT TRUE,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table `commandes` : Commandes des clients ou sur place
+CREATE TABLE commandes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    serveur_id INT NULL,
+    client_id INT NULL,
+    date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
+    statut ENUM('en cours', 'terminée') DEFAULT 'en cours',
+    type_commande ENUM('en ligne', 'sur place') NOT NULL,
+    FOREIGN KEY (serveur_id) REFERENCES employes(id),
+    FOREIGN KEY (client_id) REFERENCES users(id)
+);
+
+-- Table `ligne_de_commande` : Produits inclus dans une commande
+CREATE TABLE ligne_de_commande (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commande_id INT NOT NULL,
+    produit_id INT NOT NULL,
+    quantite INT NOT NULL,
+    FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE,
+    FOREIGN KEY (produit_id) REFERENCES produit(id)
+);
+
+-- Table `factures` : Historique des factures
+CREATE TABLE factures (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commande_id INT NOT NULL,
+    date_facture DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE
+);
+
+-- Table `paiements` : Modes de paiement
+CREATE TABLE paiements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commande_id INT NOT NULL,
+    mode ENUM('carte bancaire', 'espèces') NOT NULL,
+    statut ENUM('en attente', 'effectué') DEFAULT 'en attente',
+    date_paiement DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE
+);
